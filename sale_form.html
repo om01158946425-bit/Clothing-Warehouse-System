@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}New sale{% endblock %}
+{% block content %}
+<h1>New sale</h1>
+{% if not products %}
+<div class="empty">Nothing is in stock. <a href="{{ url_for('purchase_new') }}">Record a purchase</a> or <a href="{{ url_for('product_new') }}">add a product with a starting quantity</a>.</div>
+{% else %}
+<form method="post">
+  <label style="display:grid;gap:4px;max-width:360px;margin-bottom:16px;color:var(--muted);font-size:13px">Customer
+    <select name="customer_id">
+      <option value="">Walk-in customer</option>
+      {% for c in customers %}<option value="{{ c['id'] }}" {{ 'selected' if selected == c['id']|string }}>{{ c['name'] }}</option>{% endfor %}
+    </select>
+  </label>
+  <div class="tablewrap"><table id="lines">
+    <tr><th>Product</th><th class="num" style="width:110px">Quantity</th><th class="num" style="width:140px">Unit price</th><th class="num" style="width:120px">Line total</th><th style="width:60px"></th></tr>
+    {% for r in rows %}
+    <tr class="line">
+      <td><select name="product_id" required>
+        <option value="">Choose a product</option>
+        {% for p in products %}<option value="{{ p['id'] }}" data-price="{{ p['price'] }}" data-stock="{{ p['quantity'] }}" {{ 'selected' if r.product_id == p['id']|string }}>{{ p['sku'] }} - {{ p['name'] }} ({{ p['size'] }}, {{ p['color'] }}) - {{ p['quantity'] }} in stock</option>{% endfor %}
+      </select></td>
+      <td><input name="quantity" type="number" min="1" value="{{ r.quantity }}" required></td>
+      <td><input name="unit_price" type="number" min="0" step="0.01" value="{{ r.unit_price }}" required></td>
+      <td class="num sub">0.00</td>
+      <td><button type="button" class="ghost rm" aria-label="Remove line">Remove</button></td>
+    </tr>
+    {% endfor %}
+  </table></div>
+  <div class="bar" style="margin-top:14px">
+    <button type="button" class="ghost" id="add">Add line</button>
+    <span style="margin-left:auto;font-size:18px">Total: <b id="total">0.00</b> EGP</span>
+  </div>
+  <p class="hint">Saving takes the quantities out of stock. The unit price starts at the product's price and you can change it for a discount.</p>
+  <div class="bar"><button type="submit">Save sale</button><a class="btn ghost" href="{{ url_for('sales') }}">Cancel</a></div>
+</form>
+<script>
+(function () {
+  var table = document.getElementById('lines');
+  function recalc() {
+    var total = 0;
+    table.querySelectorAll('tr.line').forEach(function (tr) {
+      var sel = tr.querySelector('select'), qty = tr.querySelector('[name=quantity]');
+      var opt = sel.selectedOptions[0];
+      if (opt && opt.dataset.stock) qty.max = opt.dataset.stock; else qty.removeAttribute('max');
+      var q = parseFloat(qty.value) || 0;
+      var p = parseFloat(tr.querySelector('[name=unit_price]').value) || 0;
+      tr.querySelector('.sub').textContent = (q * p).toFixed(2);
+      total += q * p;
+    });
+    document.getElementById('total').textContent = total.toFixed(2);
+  }
+  table.addEventListener('input', recalc);
+  table.addEventListener('change', function (e) {
+    if (e.target.name === 'product_id') {
+      var opt = e.target.selectedOptions[0], tr = e.target.closest('tr');
+      if (opt && opt.dataset.price) tr.querySelector('[name=unit_price]').value = opt.dataset.price;
+      recalc();
+    }
+  });
+  table.addEventListener('click', function (e) {
+    if (!e.target.classList.contains('rm')) return;
+    if (table.querySelectorAll('tr.line').length > 1) { e.target.closest('tr').remove(); recalc(); }
+  });
+  document.getElementById('add').addEventListener('click', function () {
+    var rows = table.querySelectorAll('tr.line');
+    var copy = rows[rows.length - 1].cloneNode(true);
+    copy.querySelector('select').selectedIndex = 0;
+    copy.querySelectorAll('input').forEach(function (i) { i.value = ''; i.removeAttribute('max'); });
+    table.appendChild(copy); recalc();
+  });
+  recalc();
+})();
+</script>
+{% endif %}
+{% endblock %}

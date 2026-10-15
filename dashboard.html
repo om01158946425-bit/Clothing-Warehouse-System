@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Dashboard</h1>
+<div class="stats">
+  <div class="stat"><b>{{ stats['items'] }}</b><span>Products</span></div>
+  <div class="stat"><b>{{ stats['units'] }}</b><span>Units in stock</span></div>
+  <div class="stat"><b>{{ '{:,.2f}'.format(stats['value']) }}</b><span>Stock value at cost (EGP)</span></div>
+</div>
+<h2>Low stock</h2>
+{% if low %}
+<div class="tablewrap"><table>
+  <tr><th>SKU</th><th>Product</th><th class="num">In stock</th><th class="num">Reorder at</th><th></th></tr>
+  {% for p in low %}
+  <tr>
+    <td>{{ p['sku'] }}</td><td>{{ p['name'] }} ({{ p['size'] }}, {{ p['color'] }})</td>
+    <td class="num">{{ p['quantity'] }}</td><td class="num">{{ p['reorder_level'] }}</td>
+    <td>{% if p['quantity'] == 0 %}<span class="tag out">Out of stock</span>{% else %}<span class="tag">Low</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">Nothing is below its reorder level.</div>{% endif %}
+{% endblock %}

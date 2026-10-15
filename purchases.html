@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Purchases{% endblock %}
+{% block content %}
+<h1>Purchases</h1>
+<div class="bar"><a class="btn" href="{{ url_for('purchase_new') }}">New purchase</a></div>
+{% if purchases %}
+<div class="tablewrap"><table>
+  <tr><th>Invoice</th><th>Date</th><th>Supplier</th><th class="num">Lines</th><th class="num">Total (EGP)</th><th>Recorded by</th></tr>
+  {% for p in purchases %}
+  <tr>
+    <td><a href="{{ url_for('purchase_detail', pid=p['id']) }}">#{{ p['id'] }}</a></td>
+    <td>{{ p['created_at']|local }}</td><td>{{ p['supplier'] }}</td>
+    <td class="num">{{ p['lines'] }}</td><td class="num">{{ '{:,.2f}'.format(p['total']) }}</td><td>{{ p['user_name'] }}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No purchases yet. Record the first one to add stock.</div>{% endif %}
+{% endblock %}

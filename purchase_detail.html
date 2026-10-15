@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Purchase #{{ p['id'] }}{% endblock %}
+{% block content %}
+<h1>Purchase #{{ p['id'] }}</h1>
+<p class="hint">Supplier: {{ p['supplier'] }}{% if p['phone'] %} ({{ p['phone'] }}){% endif %} &nbsp;|&nbsp; Date: {{ p['created_at']|local }} &nbsp;|&nbsp; Recorded by: {{ p['user_name'] }}</p>
+<div class="tablewrap"><table>
+  <tr><th>SKU</th><th>Product</th><th class="num">Quantity</th><th class="num">Unit cost</th><th class="num">Line total</th></tr>
+  {% for i in items %}
+  <tr>
+    <td>{{ i['sku'] }}</td><td>{{ i['name'] }} ({{ i['size'] }}, {{ i['color'] }})</td>
+    <td class="num">{{ i['quantity'] }}</td><td class="num">{{ '{:,.2f}'.format(i['unit_cost']) }}</td>
+    <td class="num">{{ '{:,.2f}'.format(i['quantity'] * i['unit_cost']) }}</td>
+  </tr>
+  {% endfor %}
+  <tr><td colspan="4" class="num"><b>Total (EGP)</b></td><td class="num"><b>{{ '{:,.2f}'.format(p['total']) }}</b></td></tr>
+</table></div>
+<p><a class="btn ghost" href="{{ url_for('purchases') }}">Back to purchases</a></p>
+{% endblock %}

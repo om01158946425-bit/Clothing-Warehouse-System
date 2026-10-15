@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Adjust stock{% endblock %}
+{% block content %}
+<h1>Adjust stock</h1>
+<p class="hint" style="max-width:640px">Use this when the shelf and the system disagree: after counting stock, or for damaged, lost or returned items. Every adjustment is saved in Stock movements.</p>
+{% if not products %}
+<div class="empty">No products yet. <a href="{{ url_for('product_new') }}">Add a product</a></div>
+{% else %}
+<form class="form" method="post" id="aform">
+  <label class="full">Product
+    <select name="product_id" id="product" required>
+      <option value="">Choose a product</option>
+      {% for p in products %}<option value="{{ p['id'] }}" data-qty="{{ p['quantity'] }}" {{ 'selected' if form.get('product_id') == p['id']|string }}>{{ p['sku'] }} - {{ p['name'] }} ({{ p['size'] }}, {{ p['color'] }}) - {{ p['quantity'] }} in stock</option>{% endfor %}
+    </select></label>
+  <label>Type
+    <select name="type" id="type" required>
+      {% for key, t in types.items() %}<option value="{{ key }}" {{ 'selected' if form.get('type') == key }}>{{ t[0] }}</option>{% endfor %}
+    </select></label>
+  <label><span id="qlabel">Quantity</span>
+    <input name="quantity" id="qty" type="number" min="0" value="{{ form.get('quantity', '') }}" required></label>
+  <label class="full">Note (optional)
+    <input name="note" maxlength="200" value="{{ form.get('note', '') }}" placeholder="For example: water damage, shelf B3"></label>
+  <p class="hint full" id="preview"></p>
+  <div class="actions full"><button type="submit">Save adjustment</button></div>
+</form>
+<script>
+(function () {
+  var modes = {{ modes|tojson }};
+  var product = document.getElementById('product'), type = document.getElementById('type'),
+      qty = document.getElementById('qty'), preview = document.getElementById('preview'),
+      qlabel = document.getElementById('qlabel');
+  var labels = {set: 'Counted quantity (what is really on the shelf)', remove: 'Quantity to remove', add: 'Quantity to add'};
+  function update() {
+    var mode = modes[type.value], opt = product.selectedOptions[0];
+    qlabel.textContent = labels[mode];
+    var cur = opt && opt.dataset.qty !== undefined && product.value ? parseInt(opt.dataset.qty, 10) : null;
+    var q = parseInt(qty.value, 10);
+    if (cur === null || isNaN(q)) { preview.textContent = ''; return; }
+    var next = mode === 'set' ? q : (mode === 'add' ? cur + q : cur - q);
+    preview.textContent = next < 0 ? 'Not enough stock: only ' + cur + ' available.'
+      : 'Stock will go from ' + cur + ' to ' + next + '.';
+  }
+  [product, type, qty].forEach(function (el) { el.addEventListener('input', update); el.addEventListener('change', update); });
+  update();
+})();
+</script>
+{% endif %}
+<h2>Recent adjustments</h2>
+{% if recent %}
+<div class="tablewrap"><table>
+  <tr><th>Date</th><th>SKU</th><th>Product</th><th class="num">Change</th><th>Note</th><th>User</th></tr>
+  {% for m in recent %}
+  <tr><td>{{ m['local_at'][:16] }}</td><td>{{ m['sku'] }}</td><td>{{ m['name'] }} ({{ m['size'] }}, {{ m['color'] }})</td>
+    <td class="num {{ 'plus' if m['change'] > 0 else 'minus' }}">{{ '%+d'|format(m['change']) }}</td>
+    <td>{{ m['note'] }}</td><td>{{ m['user_name'] or '' }}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No adjustments yet.</div>{% endif %}
+{% endblock %}

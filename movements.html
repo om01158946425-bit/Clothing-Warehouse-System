@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Stock movements{% endblock %}
+{% block content %}
+<h1>Stock movements</h1>
+{% include "_reports_nav.html" %}
+<form class="filters" method="get">
+  <label>Product
+    <select name="product">
+      <option value="">All products</option>
+      {% for p in products %}<option value="{{ p['id'] }}" {{ 'selected' if product == p['id']|string }}>{{ p['sku'] }} - {{ p['name'] }} ({{ p['size'] }}, {{ p['color'] }})</option>{% endfor %}
+    </select></label>
+  <label>Reason
+    <select name="reason">
+      <option value="">All reasons</option>
+      {% for key, label in labels.items() %}<option value="{{ key }}" {{ 'selected' if reason == key }}>{{ label }}</option>{% endfor %}
+    </select></label>
+  <label>From<input type="date" name="from" value="{{ d1 }}"></label>
+  <label>To<input type="date" name="to" value="{{ d2 }}"></label>
+  <button type="submit">Apply</button>
+  <a class="btn ghost" href="{{ url_for('movements') }}">Reset</a>
+  <a class="btn ghost" href="{{ url_for('movements_csv', product=product, reason=reason, **{'from': d1, 'to': d2}) }}">Export CSV</a>
+</form>
+{% if rows %}
+<div class="tablewrap"><table>
+  <tr><th>Date</th><th>SKU</th><th>Product</th><th class="num">Change</th><th>Reason</th><th>Invoice</th><th>Note</th><th>User</th></tr>
+  {% for m in rows %}
+  <tr>
+    <td>{{ m['local_at'][:16] }}</td><td>{{ m['sku'] }}</td><td>{{ m['name'] }} ({{ m['size'] }}, {{ m['color'] }})</td>
+    <td class="num {{ 'plus' if m['change'] > 0 else 'minus' }}">{{ '%+d'|format(m['change']) }}</td>
+    <td>{{ labels[m['reason']] }}</td>
+    <td>{% if m['reason'] == 'purchase' and m['ref_id'] %}<a href="{{ url_for('purchase_detail', pid=m['ref_id']) }}">Purchase #{{ m['ref_id'] }}</a>
+        {% elif m['reason'] == 'sale' and m['ref_id'] %}<a href="{{ url_for('sale_detail', sid=m['ref_id']) }}">Sale #{{ m['ref_id'] }}</a>{% endif %}</td>
+    <td>{{ m['note'] }}</td>
+    <td>{{ m['user_name'] or '' }}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% if truncated %}<p class="hint">Showing the latest 300 movements. Export CSV to get all of them.</p>{% endif %}
+{% else %}<div class="empty">No stock movements match these filters.</div>{% endif %}
+{% endblock %}

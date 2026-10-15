@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+{% include "_reports_nav.html" %}
+<form class="filters" method="get">
+  <label>From<input type="date" name="from" value="{{ d1 }}"></label>
+  <label>To<input type="date" name="to" value="{{ d2 }}"></label>
+  <button type="submit">Apply</button>
+  <a class="btn ghost" href="{{ url_for('reports') }}">Reset</a>
+</form>
+<p class="hint">{% if d1 or d2 %}Showing {{ ('from ' ~ d1) if d1 }} {{ ('to ' ~ d2) if d2 }}{% else %}Showing all dates{% endif %}. Profit uses the cost each product had when it was sold.</p>
+
+<div class="stats">
+  <div class="stat"><b>{{ '{:,.2f}'.format(revenue) }}</b><span>Revenue (EGP) from {{ sales['n'] }} sales</span></div>
+  <div class="stat"><b>{{ '{:,.2f}'.format(cogs) }}</b><span>Cost of goods sold (EGP)</span></div>
+  <div class="stat"><b>{{ '{:,.2f}'.format(profit) }}</b><span>Gross profit (EGP), margin {{ '%.1f'|format(margin) }}%</span></div>
+  <div class="stat"><b>{{ '{:,.2f}'.format(purch['total']) }}</b><span>Spent on {{ purch['n'] }} purchases (EGP)</span></div>
+  <div class="stat"><b>{{ lines['units'] }}</b><span>Units sold</span></div>
+</div>
+
+<h2>Top selling products</h2>
+{% if top %}
+<div class="tablewrap"><table>
+  <tr><th>SKU</th><th>Product</th><th class="num">Units sold</th><th class="num">Revenue</th><th class="num">Profit</th></tr>
+  {% for t in top %}
+  <tr><td>{{ t['sku'] }}</td><td>{{ t['name'] }} ({{ t['size'] }}, {{ t['color'] }})</td>
+    <td class="num">{{ t['units'] }}</td><td class="num">{{ '{:,.2f}'.format(t['revenue']) }}</td><td class="num">{{ '{:,.2f}'.format(t['profit']) }}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No sales in this period.</div>{% endif %}
+
+<h2>Sales by day</h2>
+{% if daily %}
+<div class="tablewrap"><table>
+  <tr><th>Date</th><th class="num">Invoices</th><th class="num">Revenue (EGP)</th></tr>
+  {% for d in daily %}
+  <tr><td>{{ d['day'] }}</td><td class="num">{{ d['n'] }}</td><td class="num">{{ '{:,.2f}'.format(d['total']) }}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No sales in this period.</div>{% endif %}
+
+<h2>Export to Excel (CSV)</h2>
+<div class="bar">
+  <a class="btn ghost" href="{{ url_for('reports_sales_csv', **{'from': d1, 'to': d2}) }}">Sales lines</a>
+  <a class="btn ghost" href="{{ url_for('reports_top_csv', **{'from': d1, 'to': d2}) }}">Top products</a>
+</div>
+{% endblock %}
