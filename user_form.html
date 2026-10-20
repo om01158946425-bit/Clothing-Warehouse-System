@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add user' if is_new else 'Edit user' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Add user' if is_new else 'Edit user' }}</h1>
+<form class="form" method="post">
+  {% if is_new %}
+  <label>Username<input name="username" value="{{ u.get('username', '') }}" autocomplete="off" required></label>
+  {% else %}
+  <label>Username<input value="{{ u['username'] }}" disabled></label>
+  {% endif %}
+  <label>Full name<input name="full_name" value="{{ u.get('full_name', '') }}" required></label>
+  <label>Role
+    <select name="role">
+      <option value="storekeeper" {{ 'selected' if u.get('role') == 'storekeeper' }}>Store keeper</option>
+      <option value="admin" {{ 'selected' if u.get('role') == 'admin' }}>Admin</option>
+    </select></label>
+  <label>{{ 'Password' if is_new else 'New password (leave blank to keep the current one)' }}
+    <input name="password" type="password" autocomplete="new-password" minlength="8" {{ 'required' if is_new }}></label>
+  {% if not is_new %}
+  <label class="full" style="display:flex;gap:8px;align-items:center;color:var(--text)">
+    <input type="checkbox" name="active" value="1" style="width:auto" {{ 'checked' if u['active'] }}> Active (can log in)</label>
+  {% endif %}
+  <p class="hint full">Passwords need at least 8 characters. Admins can see profit reports and manage users; store keepers can't.</p>
+  <div class="actions full">
+    <button type="submit">{{ 'Create user' if is_new else 'Save changes' }}</button>
+    <a class="btn ghost" href="{{ url_for('users') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

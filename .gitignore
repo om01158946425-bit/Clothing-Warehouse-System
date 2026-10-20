@@ -1,0 +1,5 @@
+warehouse.db
+__pycache__/
+*.pyc
+.env
+warehouse-backup-*.db

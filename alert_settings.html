@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Low-stock alerts{% endblock %}
+{% block content %}
+<h1>Low-stock alerts</h1>
+<p class="hint" style="max-width:680px">When an item drops to its reorder level, the system sends a message to your n8n webhook once. It sends again only after the item has been restocked and then runs low again. {{ low }} item{{ '' if low == 1 else 's' }} below the reorder level right now.</p>
+<form class="form" method="post" style="max-width:680px">
+  <label class="full" style="display:flex;gap:8px;align-items:center;color:var(--text)">
+    <input type="checkbox" name="enabled" value="1" style="width:auto" {{ 'checked' if cfg.enabled }}> Send alerts to n8n</label>
+  <label class="full">Webhook address (the Production URL from the n8n Webhook node)
+    <input name="url" value="{{ cfg.url }}" placeholder="http://localhost:5678/webhook/warehouse-low-stock" maxlength="500"></label>
+  <label class="full">Secret (optional, sent as the X-Warehouse-Secret header)
+    <input name="secret" type="password" autocomplete="new-password" placeholder="{{ 'A secret is saved. Leave empty to keep it.' if cfg.has_secret else 'Leave empty for none' }}" maxlength="100"></label>
+  {% if cfg.has_secret %}<label class="full" style="display:flex;gap:8px;align-items:center;color:var(--text)">
+    <input type="checkbox" name="clear_secret" value="1" style="width:auto"> Remove the saved secret</label>{% endif %}
+  <div class="actions full"><button type="submit">Save settings</button></div>
+</form>
+
+<div class="bar" style="margin-top:16px">
+  <form method="post" action="{{ url_for('alert_test') }}" style="flex:none;min-width:0"><button type="submit" class="ghost">Send a test alert</button></form>
+  <form method="post" action="{{ url_for('alert_send_now') }}" style="flex:none;min-width:0"><button type="submit" class="ghost">Send the current low-stock list now</button></form>
+</div>
+
+<h2>Recent alerts</h2>
+{% if log %}
+<div class="tablewrap"><table>
+  <tr><th>Time</th><th>Type</th><th>Items (quantity left)</th><th>Result</th></tr>
+  {% for l in log %}
+  <tr>
+    <td>{{ l['created_at']|local }}</td>
+    <td>{{ {'low_stock': 'Low stock', 'test': 'Test', 'manual': 'Manual'}.get(l['kind'], l['kind']) }}</td>
+    <td>{{ l['summary'] }}</td>
+    <td>{% if l['ok'] is none %}Sending...{% elif l['ok'] %}<span style="color:var(--ok)">Sent ({{ l['detail'] }})</span>{% else %}<span class="tag out">Failed: {{ l['detail'] }}</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+<p class="hint">Refresh the page to see the latest result.</p>
+{% else %}<div class="empty">No alerts sent yet.</div>{% endif %}
+{% endblock %}

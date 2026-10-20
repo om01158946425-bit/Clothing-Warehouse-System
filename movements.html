@@ -29,7 +29,7 @@
     <td class="num {{ 'plus' if m['change'] > 0 else 'minus' }}">{{ '%+d'|format(m['change']) }}</td>
     <td>{{ labels[m['reason']] }}</td>
     <td>{% if m['reason'] == 'purchase' and m['ref_id'] %}<a href="{{ url_for('purchase_detail', pid=m['ref_id']) }}">Purchase #{{ m['ref_id'] }}</a>
-        {% elif m['reason'] == 'sale' and m['ref_id'] %}<a href="{{ url_for('sale_detail', sid=m['ref_id']) }}">Sale #{{ m['ref_id'] }}</a>{% endif %}</td>
+        {% elif m['reason'] == 'sale' and m['ref_id'] %}<a href="{{ url_for('sale_detail', sid=m['ref_id']) }}">Sale #{{ m['ref_id'] }}</a>{% elif m['reason'] == 'purchase_cancel' and m['ref_id'] %}<a href="{{ url_for('purchase_detail', pid=m['ref_id']) }}">Purchase #{{ m['ref_id'] }}</a>{% elif m['reason'] == 'return' and m['return_sale_id'] %}<a href="{{ url_for('sale_detail', sid=m['return_sale_id']) }}">Return, sale #{{ m['return_sale_id'] }}</a>{% endif %}</td>
     <td>{{ m['note'] }}</td>
     <td>{{ m['user_name'] or '' }}</td>
   </tr>

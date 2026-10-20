@@ -21,8 +21,11 @@
     {% set in_reports = request.endpoint and (request.endpoint.startswith('report') or request.endpoint.startswith('movement')) %}
     {% if g.user['role'] == 'admin' %}<a href="{{ url_for('reports') }}" class="{{ 'on' if in_reports }}">Reports</a>
     {% else %}<a href="{{ url_for('movements') }}" class="{{ 'on' if in_reports }}">Stock movements</a>{% endif %}
+    {% if g.user['role'] == 'admin' %}<a href="{{ url_for('users') }}" class="{{ 'on' if request.endpoint in ('users', 'user_new', 'user_edit') }}">Users</a>{% endif %}
+    {% if g.user['role'] == 'admin' %}<a href="{{ url_for('alert_settings') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('alert') }}">Alerts</a>{% endif %}
     <div class="who">
       {{ g.user['full_name'] }} ({{ g.user['role'] }})
+      <br><a href="{{ url_for('account') }}" class="{{ 'on' if request.endpoint == 'account' }}" style="padding:0;text-decoration:underline">Change password</a>
       <form method="post" action="{{ url_for('logout') }}"><button type="submit">Log out</button></form>
     </div>
   </nav>

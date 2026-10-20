@@ -5,12 +5,13 @@
 <div class="bar"><a class="btn" href="{{ url_for('purchase_new') }}">New purchase</a></div>
 {% if purchases %}
 <div class="tablewrap"><table>
-  <tr><th>Invoice</th><th>Date</th><th>Supplier</th><th class="num">Lines</th><th class="num">Total (EGP)</th><th>Recorded by</th></tr>
+  <tr><th>Invoice</th><th>Date</th><th>Supplier</th><th class="num">Lines</th><th class="num">Total (EGP)</th><th>Status</th><th>Recorded by</th></tr>
   {% for p in purchases %}
   <tr>
     <td><a href="{{ url_for('purchase_detail', pid=p['id']) }}">#{{ p['id'] }}</a></td>
     <td>{{ p['created_at']|local }}</td><td>{{ p['supplier'] }}</td>
-    <td class="num">{{ p['lines'] }}</td><td class="num">{{ '{:,.2f}'.format(p['total']) }}</td><td>{{ p['user_name'] }}</td>
+    <td class="num">{{ p['lines'] }}</td><td class="num">{% if p['cancelled_at'] %}<s>{{ '{:,.2f}'.format(p['total']) }}</s>{% else %}{{ '{:,.2f}'.format(p['total']) }}{% endif %}</td>
+    <td>{% if p['cancelled_at'] %}<span class="tag out">Cancelled</span>{% endif %}</td><td>{{ p['user_name'] }}</td>
   </tr>
   {% endfor %}
 </table></div>

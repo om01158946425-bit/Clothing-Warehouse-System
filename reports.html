@@ -9,14 +9,14 @@
   <button type="submit">Apply</button>
   <a class="btn ghost" href="{{ url_for('reports') }}">Reset</a>
 </form>
-<p class="hint">{% if d1 or d2 %}Showing {{ ('from ' ~ d1) if d1 }} {{ ('to ' ~ d2) if d2 }}{% else %}Showing all dates{% endif %}. Profit uses the cost each product had when it was sold.</p>
+<p class="hint">{% if d1 or d2 %}Showing {{ ('from ' ~ d1) if d1 }} {{ ('to ' ~ d2) if d2 }}{% else %}Showing all dates{% endif %}. Profit uses the cost each product had when it was sold. Returns are taken off the date of the original sale.</p>
 
 <div class="stats">
-  <div class="stat"><b>{{ '{:,.2f}'.format(revenue) }}</b><span>Revenue (EGP) from {{ sales['n'] }} sales</span></div>
+  <div class="stat"><b>{{ '{:,.2f}'.format(revenue) }}</b><span>Net revenue (EGP) from {{ sales['n'] }} sales</span><small>{{ '{:,.2f}'.format(returned) }} returned</small></div>
   <div class="stat"><b>{{ '{:,.2f}'.format(cogs) }}</b><span>Cost of goods sold (EGP)</span></div>
   <div class="stat"><b>{{ '{:,.2f}'.format(profit) }}</b><span>Gross profit (EGP), margin {{ '%.1f'|format(margin) }}%</span></div>
   <div class="stat"><b>{{ '{:,.2f}'.format(purch['total']) }}</b><span>Spent on {{ purch['n'] }} purchases (EGP)</span></div>
-  <div class="stat"><b>{{ lines['units'] }}</b><span>Units sold</span></div>
+  <div class="stat"><b>{{ lines['units'] }}</b><span>Units sold (after returns)</span></div>
 </div>
 
 <h2>Top selling products</h2>
