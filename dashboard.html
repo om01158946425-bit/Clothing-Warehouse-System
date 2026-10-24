@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% from "_icons.html" import ico %}
+{% block content %}
+<div class="dash-head">
+  <div><h1>{{ greeting }}, {{ g.user['full_name'] }} &#128075;</h1><p>Here is what is happening in your warehouse today.</p></div>
+  <div class="datepill">{{ date_label }}</div>
+</div>
+{% if default_pw %}<div class="flash error">You are still using the demo password. <a href="{{ url_for('account') }}">Change it now</a>.</div>{% endif %}
+
+<div class="kpis">
+  <div class="kpi"><div><span class="lab">Total products</span><b>{{ stats['items'] }}</b><span class="sub">{{ '{:,}'.format(stats['units']) }} units in stock</span></div><span class="icon">{{ ico('products') }}</span></div>
+  <div class="kpi"><div><span class="lab">Total stock value</span><b>{{ '{:,.0f}'.format(stats['value']) }}</b><span class="sub">EGP, at cost</span></div><span class="icon">{{ ico('wallet') }}</span></div>
+  <div class="kpi {{ 'alert' if status.low + status.out }}"><div><span class="lab">Low stock items</span><b>{{ status.low + status.out }}</b><span class="sub">{{ status.out }} out of stock</span></div><span class="icon">{{ ico('warning') }}</span></div>
+  <div class="kpi"><div><span class="lab">Today's sales</span><b>{{ '{:,.0f}'.format(today_sales['total']) }}</b>
+    <span class="sub">EGP, {{ today_sales['n'] }} invoice{{ '' if today_sales['n'] == 1 else 's' }}{% if trend is not none %} &middot; <span class="{{ 'up' if trend >= 0 else 'down' }}">{{ '▲' if trend >= 0 else '▼' }} {{ trend|abs }}% vs yesterday</span>{% endif %}</span></div><span class="icon">{{ ico('trend') }}</span></div>
+</div>
+
+<div class="dgrid r21">
+  <section class="panel">
+    <div class="panel-head"><h2>Stock by category</h2><span class="chips"><span>Units in stock</span></span></div>
+    {% if cats and stats['units'] %}
+    <div class="vbars" role="img" aria-label="Bar chart of units in stock for each category">
+      {% for c in cats %}<div class="vb"><span class="n">{{ c['units'] }}</span><span class="col" style="height: {{ (c['pct'] * 1.55)|round|int }}px" title="{{ c['category'] }}: {{ c['units'] }} units"></span><span class="t" title="{{ c['category'] }}">{{ c['category'] }}</span></div>{% endfor %}
+    </div>
+    {% else %}<div class="empty">No stock yet.</div>{% endif %}
+  </section>
+  <section class="panel">
+    <h2>Stock status</h2>
+    <div class="donutwrap">
+      <div class="donut" style="background: {{ donut }}" role="img" aria-label="Share of products that are in stock, low, or out of stock">
+        <div class="mid"><b>{{ status.n }}</b><small>Total items</small></div></div>
+      <div class="legend">
+        <div><span class="dot" style="background:var(--blue)"></span>In stock<span class="pct">{{ pct[0] }}%</span></div>
+        <div><span class="dot" style="background:var(--amber)"></span>Low stock<span class="pct">{{ pct[1] }}%</span></div>
+        <div><span class="dot" style="background:var(--red)"></span>Out of stock<span class="pct">{{ pct[2] }}%</span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="dgrid r21">
+  <section class="panel">
+    <div class="panel-head"><h2>Sales per day, last 30 days</h2>
+      <span class="chips"><span>Revenue <b>{{ '{:,.0f}'.format(month_revenue) }}</b> EGP</span>{% if profit is not none %}<span>Profit <b>{{ '{:,.0f}'.format(profit) }}</b> EGP ({{ '%.1f'|format(profit / month_revenue * 100 if month_revenue else 0) }}%)</span>{% endif %}<span><b>{{ month_n }}</b> invoice{{ '' if month_n == 1 else 's' }}</span></span></div>
+    {% if month_n %}
+    <div class="chart">
+      <div class="yaxis"><span>{{ axis_max }}</span><span>{{ axis_mid }}</span><span>0</span></div>
+      <div class="plot" role="img" aria-label="Bar chart of sales revenue per day for the last 30 days. Hover a bar for the exact amount.">
+        {% for d in days %}<div class="cbar {{ 'has' if d['total'] }} {{ 'today' if loop.last }}" style="height: {{ d['pct'] }}%" title="{{ d['date'] }}: {{ '{:,.2f}'.format(d['total']) }} EGP ({{ d['n'] }} invoice{{ '' if d['n'] == 1 else 's' }})"></div>{% endfor %}
+      </div>
+    </div>
+    <div class="xaxis"><span>{{ days[0]['date'][5:] }}</span><span>{{ days[14]['date'][5:] }}</span><span>{{ days[-1]['date'][5:] }} (today)</span></div>
+    {% else %}<div class="empty">No sales in the last 30 days.</div>{% endif %}
+  </section>
+  <section class="panel">
+    <h2>Top selling, last 30 days</h2>
+    {% if top %}
+    {% for r in top %}
+    <div class="hbar stacked"><span class="label">{{ r['name'] }} ({{ r['size'] }}, {{ r['color'] }})</span>
+      <span class="val">{{ r['units'] }}</span>
+      <span class="track"><span class="fill" style="display:block;width: {{ r['pct'] }}%"></span></span></div>
+    {% endfor %}
+    <p class="hint">Units sold.</p>
+    {% else %}<div class="empty">No sales in the last 30 days.</div>{% endif %}
+  </section>
+</div>
+
+<div class="dgrid r21">
+  <section class="panel">
+    <div class="panel-head"><h2>Recent activity</h2><a href="{{ url_for('movements') }}">View all</a></div>
+    {% if recent %}
+    <div class="tablewrap"><table>
+      <tr><th>Date</th><th>Action</th><th>Product</th><th class="num">Quantity</th></tr>
+      {% for m in recent %}
+      <tr><td>{{ m['created_at']|local }}</td><td>{{ labels.get(m['reason'], m['reason']) }}</td>
+        <td>{{ m['name'] }} ({{ m['size'] }}, {{ m['color'] }})</td>
+        <td class="num {{ 'plus' if m['change'] > 0 else 'minus' }}">{{ '%+d'|format(m['change']) }}</td></tr>
+      {% endfor %}
+    </table></div>
+    {% else %}<div class="empty">Nothing has happened yet.</div>{% endif %}
+  </section>
+  <section class="panel">
+    <h2>Quick actions</h2>
+    <div class="qa">
+      <a href="{{ url_for('sale_new') }}">{{ ico('sales') }}New sale</a>
+      <a href="{{ url_for('purchase_new') }}">{{ ico('purchases') }}New purchase</a>
+      <a href="{{ url_for('product_new') }}">{{ ico('plus') }}Add product</a>
+      <a href="{{ url_for('stock_adjust') }}">{{ ico('adjust') }}Adjust stock</a>
+      {% if g.user['role'] == 'admin' %}<a href="{{ url_for('reports') }}">{{ ico('reports') }}View reports</a>{% else %}<a href="{{ url_for('movements') }}">{{ ico('movements') }}Stock movements</a>{% endif %}
+      <a href="#low">{{ ico('warning') }}Low stock list</a>
+    </div>
+  </section>
+</div>
+
+<h2 id="low">Low stock</h2>
+{% if low %}
+<div class="tablewrap"><table>
+  <tr><th>SKU</th><th>Product</th><th class="num">In stock</th><th class="num">Reorder at</th><th></th></tr>
+  {% for p in low %}
+  <tr>
+    <td>{{ p['sku'] }}</td><td>{{ p['name'] }} ({{ p['size'] }}, {{ p['color'] }})</td>
+    <td class="num">{{ p['quantity'] }}</td><td class="num">{{ p['reorder_level'] }}</td>
+    <td>{% if p['quantity'] == 0 %}<span class="tag out">Out of stock</span>{% else %}<span class="tag">Low</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">Nothing is below its reorder level.</div>{% endif %}
+{% endblock %}

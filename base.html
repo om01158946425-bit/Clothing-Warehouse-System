@@ -1,0 +1,54 @@
+{% from "_icons.html" import ico %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Clothing Warehouse{% endblock %}</title>
+  <script>try { document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark'; } catch (e) { document.documentElement.dataset.theme = 'dark'; }</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+{% if g.user %}
+<div class="layout">
+  <nav class="side">
+    <div class="brand">{{ ico('hanger') }}<div><b>Clothing Warehouse</b><small>Smart inventory, better business</small></div></div>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'on' if request.endpoint == 'dashboard' }}">{{ ico('dashboard') }}Dashboard</a>
+    <a href="{{ url_for('products') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('product') }}">{{ ico('products') }}Products</a>
+    <a href="{{ url_for('suppliers') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('supplier') }}">{{ ico('suppliers') }}Suppliers</a>
+    <a href="{{ url_for('purchases') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('purchase') }}">{{ ico('purchases') }}Purchases</a>
+    <a href="{{ url_for('customers') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('customer') }}">{{ ico('customers') }}Customers</a>
+    <a href="{{ url_for('sales') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('sale') }}">{{ ico('sales') }}Sales</a>
+    <a href="{{ url_for('stock_adjust') }}" class="{{ 'on' if request.endpoint == 'stock_adjust' }}">{{ ico('adjust') }}Adjust stock</a>
+    {% set in_reports = request.endpoint and (request.endpoint.startswith('report') or request.endpoint.startswith('movement')) %}
+    {% if g.user['role'] == 'admin' %}<a href="{{ url_for('reports') }}" class="{{ 'on' if in_reports }}">{{ ico('reports') }}Reports</a>
+    {% else %}<a href="{{ url_for('movements') }}" class="{{ 'on' if in_reports }}">{{ ico('movements') }}Stock movements</a>{% endif %}
+    {% if g.user['role'] == 'admin' %}<a href="{{ url_for('users') }}" class="{{ 'on' if request.endpoint in ('users', 'user_new', 'user_edit') }}">{{ ico('users') }}Users</a>{% endif %}
+    {% if g.user['role'] == 'admin' %}<a href="{{ url_for('alert_settings') }}" class="{{ 'on' if request.endpoint and request.endpoint.startswith('alert') }}">{{ ico('alerts') }}Alerts</a>{% endif %}
+    <div class="who">
+      <div class="user"><span class="avatar">{{ g.user['full_name']|initials }}</span><span><b>{{ g.user['full_name'] }}</b><small>{{ g.user['role'] }}</small></span></div>
+      <a href="{{ url_for('account') }}">Change password</a>
+      <div class="who-actions">
+        <form method="post" action="{{ url_for('logout') }}"><button type="submit">Log out</button></form>
+        <button type="button" id="themebtn" class="themebtn" aria-label="Switch between dark and light theme" title="Dark / light">{{ ico('sun') }}{{ ico('moon') }}</button>
+      </div>
+    </div>
+  </nav>
+  <main>
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}" style="max-width:360px;margin:20px auto 0">{{ msg }}</div>{% endfor %}
+  {% block public %}{% endblock %}
+{% endif %}
+<script>
+  var tb = document.getElementById('themebtn');
+  if (tb) tb.addEventListener('click', function () {
+    var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = t;
+    try { localStorage.setItem('theme', t); } catch (e) {}
+  });
+</script>
+</body>
+</html>

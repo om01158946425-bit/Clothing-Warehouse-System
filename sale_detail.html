@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Sale #{{ s['id'] }}{% endblock %}
+{% block content %}
+<h1>Sale #{{ s['id'] }}
+  {% if cancel %}<span class="tag out" style="font-size:14px;vertical-align:middle">Cancelled</span>
+  {% elif returned_total %}<span class="tag" style="font-size:14px;vertical-align:middle">{{ 'Fully returned' if not can_return else 'Partly returned' }}</span>{% endif %}</h1>
+{% if cancel %}<div class="flash error">Cancelled on {{ cancel['created_at']|local }} by {{ cancel['user_name'] }}. {{ cancel['note'] }}. The items went back to stock and this sale is not counted in the reports.</div>{% endif %}
+<p class="hint">Customer: {{ s['customer'] }}{% if s['phone'] %} ({{ s['phone'] }}){% endif %} &nbsp;|&nbsp; Date: {{ s['created_at']|local }} &nbsp;|&nbsp; Recorded by: {{ s['user_name'] }}</p>
+<div class="tablewrap"><table>
+  <tr><th>SKU</th><th>Product</th><th class="num">Quantity</th><th class="num">Returned</th><th class="num">Unit price</th><th class="num">Line total</th></tr>
+  {% for i in items %}
+  <tr>
+    <td>{{ i['sku'] }}</td><td>{{ i['name'] }} ({{ i['size'] }}, {{ i['color'] }})</td>
+    <td class="num">{{ i['quantity'] }}</td><td class="num">{{ i['returned'] or '' }}</td><td class="num">{{ '{:,.2f}'.format(i['unit_price']) }}</td>
+    <td class="num">{{ '{:,.2f}'.format(i['quantity'] * i['unit_price']) }}</td>
+  </tr>
+  {% endfor %}
+  <tr><td colspan="5" class="num"><b>Total (EGP)</b></td><td class="num"><b>{{ '{:,.2f}'.format(s['total']) }}</b></td></tr>
+  {% if returned_total %}
+  <tr><td colspan="5" class="num">{{ 'Cancelled and returned (EGP)' if cancel else 'Returned (EGP)' }}</td><td class="num">-{{ '{:,.2f}'.format(returned_total) }}</td></tr>
+  <tr><td colspan="5" class="num"><b>Net total (EGP)</b></td><td class="num"><b>{{ '{:,.2f}'.format(s['total'] - returned_total) }}</b></td></tr>
+  {% endif %}
+</table></div>
+<div class="bar" style="margin-top:14px">
+  {% if can_return %}<a class="btn danger" href="{{ url_for('sale_return', sid=s['id']) }}">Return items</a>{% endif %}
+  <a class="btn ghost" href="{{ url_for('sales') }}">Back to sales</a>
+</div>
+{% if g.user['role'] == 'admin' and not cancel %}
+<details class="cancelbox">
+  <summary>Cancel this whole sale</summary>
+  <form method="post" action="{{ url_for('sale_cancel', sid=s['id']) }}" onsubmit="return confirm('Cancel this sale and put everything back in stock? This cannot be undone.')">
+    <label>Reason (required)<input name="reason" maxlength="200" required placeholder="For example: entered by mistake, customer changed their mind"></label>
+    <div><button type="submit" class="danger">Cancel sale</button></div>
+  </form>
+</details>
+{% endif %}
+
+{% if returns %}
+<h2>Returns and cancellation</h2>
+<div class="tablewrap"><table>
+  <tr><th>Return</th><th>Date</th><th>Items</th><th class="num">Refund (EGP)</th><th>Note</th><th>By</th></tr>
+  {% for r in returns %}
+  <tr>
+    <td>#{{ r['id'] }}</td><td>{{ r['created_at']|local }}</td>
+    <td>{% for it in ritems.get(r['id'], []) %}{{ it['quantity'] }} x {{ it['sku'] }}{{ ', ' if not loop.last }}{% endfor %}</td>
+    <td class="num">{{ '{:,.2f}'.format(r['total']) }}</td><td>{{ r['note'] }}</td><td>{{ r['user_name'] }}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% endif %}
+{% endblock %}

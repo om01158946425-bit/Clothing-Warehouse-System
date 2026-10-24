@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Sales{% endblock %}
+{% block content %}
+<h1>Sales</h1>
+<div class="bar"><a class="btn" href="{{ url_for('sale_new') }}">New sale</a></div>
+{% if sales %}
+<div class="tablewrap"><table>
+  <tr><th>Invoice</th><th>Date</th><th>Customer</th><th class="num">Lines</th><th class="num">Total (EGP)</th><th>Status</th><th>Recorded by</th></tr>
+  {% for s in sales %}
+  <tr>
+    <td><a href="{{ url_for('sale_detail', sid=s['id']) }}">#{{ s['id'] }}</a></td>
+    <td>{{ s['created_at']|local }}</td><td>{{ s['customer'] }}</td>
+    <td class="num">{{ s['lines'] }}</td><td class="num">{% if s['cancelled'] %}<s>{{ '{:,.2f}'.format(s['total']) }}</s>{% else %}{{ '{:,.2f}'.format(s['total']) }}{% endif %}</td>
+    <td>{% if s['cancelled'] %}<span class="tag out">Cancelled</span>{% elif s['returned'] %}<span class="tag">{{ 'Returned' if s['returned'] >= s['total'] - 0.005 else 'Partly returned' }}: {{ '{:,.2f}'.format(s['returned']) }}</span>{% endif %}</td><td>{{ s['user_name'] }}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No sales yet. Record the first one.</div>{% endif %}
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Suppliers{% endblock %}
+{% block content %}
+<h1>Suppliers</h1>
+<div class="bar"><a class="btn" href="{{ url_for('supplier_new') }}">Add supplier</a></div>
+{% if suppliers %}
+<div class="tablewrap"><table>
+  <tr><th>Name</th><th>Phone</th><th>Address</th><th class="num">Purchases</th><th class="num">Total spent (EGP)</th><th></th></tr>
+  {% for s in suppliers %}
+  <tr>
+    <td>{{ s['name'] }}</td><td>{{ s['phone'] }}</td><td>{{ s['address'] }}</td>
+    <td class="num">{{ s['purchases'] }}</td><td class="num">{{ '{:,.2f}'.format(s['spent']) }}</td>
+    <td>
+      <a href="{{ url_for('supplier_edit', sid=s['id']) }}">Edit</a>
+      {% if g.user['role'] == 'admin' %}
+      <form method="post" action="{{ url_for('supplier_delete', sid=s['id']) }}" style="display:inline" onsubmit="return confirm('Delete this supplier?')">
+        <button type="submit" class="danger" style="padding:2px 8px;margin-left:6px">Delete</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No suppliers yet. Add one before recording a purchase.</div>{% endif %}
+{% endblock %}
