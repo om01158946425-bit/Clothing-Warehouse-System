@@ -1,0 +1,72 @@
+{
+  "name": "Warehouse low-stock alert",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "warehouse-low-stock",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "6f1c2f0e-0001-4a00-9000-000000000001",
+      "name": "Warehouse webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6f1c2f0e-0001-4a00-9000-0000000000a1"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "={{ $json.body.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "6f1c2f0e-0002-4a00-9000-000000000002",
+      "name": "Send Telegram message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        280,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Warehouse low-stock alert\n1. Webhook node: create a Header Auth credential. Name = X-Warehouse-Secret, Value = the same secret you typed in the warehouse app (Alerts page).\n2. Telegram node: pick your Telegram credential and replace YOUR_CHAT_ID with your chat id.\n3. Activate the workflow, then copy the Production URL of the Webhook node into the warehouse app.\n\nThe app sends JSON like {event, message, products:[{sku,name,quantity,reorder_level,status}]}. Everything is under $json.body.",
+        "height": 260,
+        "width": 420
+      },
+      "id": "6f1c2f0e-0003-4a00-9000-000000000003",
+      "name": "Setup notes",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -300
+      ]
+    }
+  ],
+  "connections": {
+    "Warehouse webhook": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,4 @@
+<div class="subnav">
+  {% if g.user['role'] == 'admin' %}<a href="{{ url_for('reports') }}" class="{{ 'on' if request.endpoint == 'reports' }}">Sales and profit</a>{% endif %}
+  <a href="{{ url_for('movements') }}" class="{{ 'on' if request.endpoint == 'movements' }}">Stock movements</a>
+</div>

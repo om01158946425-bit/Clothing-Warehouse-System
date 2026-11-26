@@ -1,0 +1,94 @@
+{% macro ptable(rows) %}
+<div class="tablewrap"><table>
+  <tr><th>SKU</th><th>Product</th><th class="num">Stock</th><th>Status</th></tr>
+  {% for p in rows %}
+  <tr data-detail="product" data-key="{{ p['id'] }}">
+    <td>{{ p['sku'] }}</td><td>{{ p['name'] }} ({{ p['size'] }}, {{ p['color'] }})</td><td class="num">{{ p['quantity'] }}</td>
+    <td>{% if p['quantity'] == 0 %}<span class="tag out">Out of stock</span>{% elif p['quantity'] <= p['reorder_level'] %}<span class="tag">Low</span>{% else %}<span class="tag ok">In stock</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% endmacro %}
+{% if kind == 'products' %}
+<h2>All products</h2>
+<p class="hint">{{ total }} products. Click one to see its details.{% if total > rows|length %} Showing the first {{ rows|length }}.{% endif %}</p>
+{{ ptable(rows) }}
+<p><a class="btn ghost" href="{{ url_for('products') }}">Open the full list</a></p>
+
+{% elif kind == 'status' %}
+<h2>{{ {'ok': 'Products in stock', 'low': 'Products low on stock', 'out': 'Products out of stock', 'attention': 'Products that need restocking'}[key] }}</h2>
+{% if rows %}<p class="hint">{{ rows|length }} product{{ '' if rows|length == 1 else 's' }}. Click one to see its details.</p>{{ ptable(rows) }}
+{% else %}<div class="empty">Nothing here.</div>{% endif %}
+<p><a class="btn ghost" href="{{ url_for('purchase_new') }}">New purchase</a> <a class="btn ghost" href="{{ url_for('stock_adjust') }}">Adjust stock</a></p>
+
+{% elif kind == 'category' %}
+<h2>{{ key }}</h2>
+<p class="hint">{{ rows|length }} product{{ '' if rows|length == 1 else 's' }} &middot; {{ units }} units in stock &middot; {{ '{:,.0f}'.format(value) }} EGP at cost</p>
+{% if rows %}{{ ptable(rows) }}{% else %}<div class="empty">No products in this category.</div>{% endif %}
+
+{% elif kind == 'value' %}
+<h2>Stock value by category</h2>
+<p class="hint">Quantity times cost. Click a category to see its products.</p>
+<div class="tablewrap"><table>
+  <tr><th>Category</th><th class="num">Products</th><th class="num">Units</th><th class="num">Value (EGP)</th></tr>
+  {% for r in rows %}
+  <tr data-detail="category" data-key="{{ r['category'] }}"><td>{{ r['category'] }}</td><td class="num">{{ r['products'] }}</td><td class="num">{{ r['units'] }}</td><td class="num">{{ '{:,.0f}'.format(r['value']) }}</td></tr>
+  {% endfor %}
+  <tr><td><b>Total</b></td><td class="num"><b>{{ rows|sum(attribute='products') }}</b></td><td class="num"><b>{{ rows|sum(attribute='units') }}</b></td><td class="num"><b>{{ '{:,.0f}'.format(rows|sum(attribute='value')) }}</b></td></tr>
+</table></div>
+
+{% elif kind == 'day' %}
+<h2>{{ 'Sales today' if is_today else 'Sales on ' ~ day }}</h2>
+{% if rows %}
+<p class="hint">{{ rows|length }} invoice{{ '' if rows|length == 1 else 's' }} &middot; {{ '{:,.2f}'.format(net) }} EGP after returns</p>
+<div class="tablewrap"><table>
+  <tr><th>Invoice</th><th>Time</th><th>Customer</th><th class="num">Items</th><th class="num">Net (EGP)</th></tr>
+  {% for r in rows %}
+  <tr><td><a href="{{ url_for('sale_detail', sid=r['id']) }}">#{{ r['id'] }}</a></td><td>{{ r['at'][11:16] }}</td><td>{{ r['customer'] }}</td><td class="num">{{ r['lines'] }}</td>
+    <td class="num">{{ '{:,.2f}'.format(r['net_total']) }}{% if r['net_total'] < r['total'] %} <span class="tag">Returned</span>{% endif %}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No sales on this day.</div>{% endif %}
+<p><a class="btn ghost" href="{{ url_for('sales') }}">Open all sales</a></p>
+
+{% elif kind == 'product' %}
+<h2>{{ p['name'] }}</h2>
+<p class="hint">{{ p['sku'] }} &middot; {{ p['size'] }}, {{ p['color'] }}{% if p['category'] %} &middot; {{ p['category'] }}{% endif %}</p>
+<div class="mini">
+  <div><span>In stock</span><b>{{ p['quantity'] }}</b></div>
+  <div><span>Reorder at</span><b>{{ p['reorder_level'] }}</b></div>
+  <div><span>Cost</span><b>{{ '{:,.2f}'.format(p['cost']) }}</b></div>
+  <div><span>Price</span><b>{{ '{:,.2f}'.format(p['price']) }}</b></div>
+  <div><span>Sold, last 30 days</span><b>{{ sold['units'] }}</b></div>
+  <div><span>Revenue, last 30 days</span><b>{{ '{:,.0f}'.format(sold['revenue']) }}</b></div>
+  {% if is_admin %}<div><span>Profit, last 30 days</span><b>{{ '{:,.0f}'.format(sold['profit']) }}</b></div>{% endif %}
+</div>
+<h3>Latest stock movements</h3>
+{% if moves %}
+<div class="tablewrap"><table>
+  <tr><th>Date</th><th>Action</th><th class="num">Quantity</th></tr>
+  {% for m in moves %}
+  <tr data-detail="movement" data-key="{{ m['id'] }}"><td>{{ m['at'] }}</td><td>{{ labels.get(m['reason'], m['reason']) }}</td>
+    <td class="num {{ 'plus' if m['change'] > 0 else 'minus' }}">{{ '%+d'|format(m['change']) }}</td></tr>
+  {% endfor %}
+</table></div>
+{% else %}<div class="empty">No movements yet.</div>{% endif %}
+<p><a class="btn ghost" href="{{ url_for('product_edit', pid=p['id']) }}">Edit product</a>
+   <a class="btn ghost" href="{{ url_for('stock_adjust', product=p['id']) }}">Adjust stock</a>
+   <a class="btn ghost" href="{{ url_for('purchase_new') }}">New purchase</a></p>
+
+{% elif kind == 'movement' %}
+<h2>{{ labels.get(m['reason'], m['reason']) }}</h2>
+<p class="hint">{{ m['at'] }}</p>
+<div class="mini">
+  <div><span>Change</span><b class="{{ 'plus' if m['change'] > 0 else 'minus' }}">{{ '%+d'|format(m['change']) }}</b></div>
+  <div><span>Recorded by</span><b>{{ m['user_name'] or '-' }}</b></div>
+</div>
+<p><a href="#" data-detail="product" data-key="{{ m['pid'] }}">{{ m['name'] }} ({{ m['size'] }}, {{ m['color'] }})</a> &middot; {{ m['sku'] }}</p>
+{% if m['note'] %}<p class="hint">{{ m['note'] }}</p>{% endif %}
+{% if inv_kind == 'sale' %}<p><a class="btn ghost" href="{{ url_for('sale_detail', sid=inv_id) }}">Open sale #{{ inv_id }}</a></p>
+{% elif inv_kind == 'purchase' %}<p><a class="btn ghost" href="{{ url_for('purchase_detail', pid=inv_id) }}">Open purchase #{{ inv_id }}</a></p>{% endif %}
+
+{% else %}
+<div class="empty">This item no longer exists.</div>
+{% endif %}

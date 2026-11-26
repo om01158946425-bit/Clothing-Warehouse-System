@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add customer' if is_new else 'Edit customer' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Add customer' if is_new else 'Edit customer' }}</h1>
+<form class="form" method="post">
+  {% if dup %}
+  <div class="full dupcard">
+    <b>Already registered:</b>
+    <span>{{ dup['name'] }}{% if dup['phone'] %} &middot; {{ dup['phone'] }}{% endif %}{% if dup['address'] %} &middot; {{ dup['address'] }}{% endif %}</span>
+    <a href="{{ url_for('customer_edit', cid=dup['id']) }}">Open this customer</a>
+    {% if dup_warn %}<label class="check"><input type="checkbox" name="different" value="1"> It is a different customer with the same name</label>{% endif %}
+  </div>
+  {% endif %}
+  <label class="full">Name<input name="name" value="{{ c.get('name', '') }}" required maxlength="100" data-filter="name" autocomplete="off" placeholder="Full name"></label>
+  <label>Phone<input name="phone" type="tel" inputmode="tel" value="{{ c.get('phone', '') }}" maxlength="20" data-filter="phone" autocomplete="off" placeholder="01012345678"></label>
+  <label>Address<input name="address" value="{{ c.get('address', '') }}" maxlength="200" data-filter="address" data-msg="Address must include a street or area name, not only numbers." autocomplete="off" placeholder="15 Tahrir St, Cairo"></label>
+  <div class="actions full">
+    <button type="submit">{{ 'Add customer' if is_new else 'Save changes' }}</button>
+    <a class="btn ghost" href="{{ url_for('customers') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

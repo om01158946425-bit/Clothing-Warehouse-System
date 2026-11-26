@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Purchases{% endblock %}
+{% block content %}
+<h1>Purchases</h1>
+<div class="bar"><form method="get"><input type="search" name="q" value="" data-livesearch="#purlist" autocomplete="off" placeholder="Search invoice number, supplier or user" aria-label="Search"></form><a class="btn" href="{{ url_for('purchase_new') }}">New purchase</a></div>
+{% if purchases %}
+<div class="tablewrap"><table id="purlist">
+  <tr><th>Invoice</th><th>Date</th><th>Supplier</th><th class="num">Lines</th><th class="num">Total (EGP)</th><th>Status</th><th>Recorded by</th></tr>
+  {% for p in purchases %}
+  <tr data-s="{{ p['id'] }} #{{ p['id'] }} {{ p['supplier'] }} {{ p['user_name'] }} {{ p['created_at']|local }}">
+    <td><a href="{{ url_for('purchase_detail', pid=p['id']) }}">#{{ p['id'] }}</a></td>
+    <td>{{ p['created_at']|local }}</td><td>{{ p['supplier'] }}</td>
+    <td class="num">{{ p['lines'] }}</td><td class="num">{% if p['cancelled_at'] %}<s>{{ '{:,.2f}'.format(p['total']) }}</s>{% else %}{{ '{:,.2f}'.format(p['total']) }}{% endif %}</td>
+    <td>{% if p['cancelled_at'] %}<span class="tag out">Cancelled</span>{% else %}<span class="tag ok">Completed</span>{% endif %}</td><td>{{ p['user_name'] }}</td>
+  </tr>
+  {% endfor %}
+</table></div>
+<div class="empty" id="nomatch" hidden>No matching items.</div>
+{% else %}<div class="empty">No purchases yet. Record the first one to add stock.</div>{% endif %}
+{% endblock %}

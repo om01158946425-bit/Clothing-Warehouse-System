@@ -1,0 +1,8 @@
+warehouse.db
+__pycache__/
+*.pyc
+.env
+warehouse-backup-*.db
+warehouse.log*
+warehouse.pid
+secret.key
